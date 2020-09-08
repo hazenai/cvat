@@ -58,6 +58,7 @@ services:
       - cvat_keys:/home/django/keys
       - cvat_logs:/home/django/logs
       - cvat_models:/home/django/models
+      - /data/cvat/datasets:/home/django/share:ro
 
   cvat_ui:
     container_name: cvat_ui
@@ -87,10 +88,12 @@ services:
       - cvat
       - cvat_ui
     environment:
-      CVAT_HOST: localhost
+      CVAT_HOST: cvat.hazenai.com
     ports:
-      - "8080:80"
+      - 443:443
+      - "80:80"
     volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
       - ./cvat_proxy/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./cvat_proxy/conf.d/cvat.conf.template:/etc/nginx/conf.d/cvat.conf.template:ro
     command: /bin/sh -c "envsubst '$$CVAT_HOST' < /etc/nginx/conf.d/cvat.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"

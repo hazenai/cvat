@@ -5,7 +5,15 @@ server {
 }
 
 server {
-    listen       80;
+    # SSL configuration
+
+    listen [::]:443 ssl ipv6only=on;
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/cvat.hazenai.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/cvat.hazenai.com/privkey.pem;
+    # include /etc/letsencrypt/options-ssl-nginx.conf;
+    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+ 
     server_name  ${CVAT_HOST};
 
     proxy_pass_header       X-CSRFToken;
