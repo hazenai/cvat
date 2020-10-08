@@ -1,7 +1,7 @@
 server {
     listen       80;
-    server_name  _ default;
-    return       404;
+    server_name  ${CVAT_HOST};
+    return 301 https://${CVAT_HOST}$request_uri;
 }
 
 server {
