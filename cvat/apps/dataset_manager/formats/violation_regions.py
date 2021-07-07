@@ -5,6 +5,7 @@
 import os
 import os.path as osp
 import zipfile
+import yaml
 from collections import OrderedDict
 from glob import glob
 from tempfile import TemporaryDirectory
@@ -34,8 +35,30 @@ def dump_as_site_config(file_object, annotations):
                         )) for x, y in pairwise(shape.points))
                     ))
 
-            line = "\t" + shape.label + ": [["+ pts +"]]\n"
+            line = "  " + shape.label + ": [["+ pts +"]]\n"
             file_object.write(str.encode(line))
+
+def load(file_object, annotations):
+
+    site_config = yaml.safe_load(file_object)
+
+    for k,v in site_config[0].items():
+        shape = {}
+        shape['attributes'] = []
+        shape['frame'] = 0
+        shape['label'] = k
+        shape['group'] = 0
+        shape['source'] = 'manual'
+
+        shape['type'] = 'polygon'
+        shape['occluded'] = 0
+        shape['z_order'] = 0
+
+        shape['points'] = []
+        for p in v:
+            shape['points'].extend(map(float, p))
+        annotations.add_shape(annotations.LabeledShape(**shape))
+
 
 
 def _export(dst_file, task_data, anno_callback, save_images=False):
@@ -49,3 +72,17 @@ def _export(dst_file, task_data, anno_callback, save_images=False):
 def _export_images(dst_file, task_data, save_images=False):
     _export(dst_file, task_data,
         anno_callback=dump_as_site_config, save_images=save_images)
+
+@importer(name='VL Site Config', ext='YAML, ZIP', version='1.1')
+def _import(src_file, task_data):
+    is_zip = zipfile.is_zipfile(src_file)
+    src_file.seek(0)
+    if is_zip:
+        with TemporaryDirectory() as tmp_dir:
+            zipfile.ZipFile(src_file).extractall(tmp_dir)
+
+            anno_paths = glob(osp.join(tmp_dir, '**', '*.yaml'), recursive=True)
+            for p in anno_paths:
+                load(p, task_data)
+    else:
+        load(src_file, task_data)
